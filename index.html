@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade Calculator</title>
+    <!-- Include PyScript -->
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <style>
+        body {
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #d4edda;
+            color: #333;
+        }
+
+        input {
+            margin: 8px;
+            padding: 10px;
+            border: 1px solid #6c757d;
+            border-radius: 50px;
+            width: 250px;
+            background-color: #f8f9fa;
+            font-size: 16px;
+        }
+
+        button {
+            margin: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            background-color: #28a745;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        p {
+            font-size: 18px;
+            font-weight: bold;
+            display: none;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- HTML elements for user input -->
+    <input type="number" id="absences" placeholder="Number of Absences" min="0" />
+    <input type="number" id="prelim_exam" placeholder="Prelim Exam Grade (0-100)" />
+    <input type="number" id="quiz" placeholder="Quizzes Grade (0-100)" />
+    <input type="number" id="requirements" placeholder="Requirements Grade (0-100)" />
+    <input type="number" id="recitation" placeholder="Recitation Grade (0-100)" />
+    <button id="calculateButton">Calculate Grades</button>
+    <button id="populateButton">Generate Sample</button>
+    <p id="result"></p>
+
+    <!-- PyScript code -->
+    <py-script>
+        from pyscript import Element
+
+        def calculate_grades(event):
+            try:
+                absences = int(Element("absences").element.value)
+
+                # Check for automatic failure
+                if absences >= 4:
+                    Element("result").write("FAILED due to too many absences.")
+                    Element("result").element.style.display = "block"
+                    return
+                
+                # Get values from inputs
+                prelim_exam = float(Element("prelim_exam").element.value)
+                quiz = float(Element("quiz").element.value)
+                requirements = float(Element("requirements").element.value)
+                recitation = float(Element("recitation").element.value)
+
+                # Input validation for grades
+                if not all(0 <= grade <= 100 for grade in [prelim_exam, quiz, requirements, recitation]):
+                    raise ValueError("All grades must be between 0 and 100.")
+
+                # Calculate attendance grade
+                attendance_grade = max(0, 100 - absences * 10)
+
+                # Calculate class standing
+                class_standing = (0.4 * quiz) + (0.3 * requirements) + (0.3 * recitation)
+
+                # Calculate prelim grade
+                prelim_grade = round((0.6 * prelim_exam) + (0.1 * attendance_grade) + (0.3 * class_standing), 2)
+
+                # Display prelim grade
+                Element("result").write(f"Your Prelim Grade is: {prelim_grade:.2f}")
+
+                # Calculate required Midterm and Final grades
+                needed_midterm_pass = max(0, min(100, (75 - (0.2 * prelim_grade)) / 0.3))
+                needed_final_pass = max(0, min(100, (75 - (0.2 * prelim_grade) - (0.3 * needed_midterm_pass)) / 0.5))
+
+                needed_midterm_dean = max(0, min(100, (90 - (0.2 * prelim_grade)) / 0.3))
+                needed_final_dean = max(0, min(100, (90 - (0.2 * prelim_grade) - (0.3 * needed_midterm_dean)) / 0.5))
+
+                # Display required grades
+                Element("result").write(f"\nTo pass with 75%, you need Midterm: {needed_midterm_pass:.2f}, Final: {needed_final_pass:.2f}.")
+                Element("result").write(f"\nTo achieve 90%, you need Midterm: {needed_midterm_dean:.2f}, Final: {needed_final_dean:.2f}.")
+                Element("result").element.style.display = "block"
+
+            except ValueError as e:
+                Element("result").write(f"Invalid input: {e}")
+                Element("result").element.style.display = "block"
+
+        def populate_inputs(event):
+            # Set predefined values for testing
+            Element("absences").element.value = 2
+            Element("prelim_exam").element.value = 85
+            Element("quiz").element.value = 90
+            Element("requirements").element.value = 80
+            Element("recitation").element.value = 85
+
+        # Attach event listeners to the buttons
+        Element("calculateButton").element.onclick = calculate_grades
+        Element("populateButton").element.onclick = populate_inputs
+    </py-script>
+</body>
+</html>
